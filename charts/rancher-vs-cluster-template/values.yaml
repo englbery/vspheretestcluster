@@ -1,4 +1,23 @@
 cluster:
   name: vs-cluster
 
+cloudprovider: vsphere
+
 cloudCredentialSecretName: "DemoLabRan"
+
+nodepools:
+- etcd: true
+  controlplane: true
+  worker: true
+
+  # specify node labels
+  labels: {}
+
+  # specify node taints
+  taints: {}
+
+  # specify nodepool size
+  quantity: 1
+
+  # Pause node pool
+  paused: false

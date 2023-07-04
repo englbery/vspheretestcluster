@@ -10,3 +10,12 @@ questions:
   label: "CloudCredential Name"
   type: cloudcredential
   group: "General"
+- variable: nodepools.0.quantity
+  default: 1
+  description: "Wie fui derfs sei?"
+  type: enum
+  label: "Nodeanzahl"
+  group: "Nodepools"
+  options:
+    - 1
+    - 5
