@@ -1,11 +1,18 @@
 {{- if eq .Values.cloudprovider "vsphere" }}
-{{- range $index, $nodepool := .Values.nodepools }}
 apiVersion: rke-machine-config.cattle.io/v1
 kind: VmwarevsphereConfig
 metadata:
   name: {{ $nodepool.name }}
   namespace: fleet-default
 common:
+{{- if $nodepool.labels }}
+  labels:
+{{ toYaml $nodepool.labels | indent 4 }}
+{{- end }}
+{{- if $nodepool.taints }}
+  taints:
+{{ toYaml $nodepool.taints | indent 4 }}
+{{- end }}
 {{- if $nodepool.cfgparam }}
 cfgparam: {{ $nodepool.cfgparam }}
 {{- end }}
@@ -36,5 +43,4 @@ vappProperty: {{ $nodepool.vappProperty }}
 vappTransport: {{ $nodepool.vappTransport }}
 vcenter: {{ $nodepool.vcenter }}
 vcenterPort: {{ $nodepool.vcenterPort | quote }}
-
-
+{{- end }}
