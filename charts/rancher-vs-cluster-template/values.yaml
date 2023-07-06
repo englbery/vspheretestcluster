@@ -65,10 +65,11 @@ nodepools:
     name: "vsphere-nodepool-1"
 
     # vSphere vm configuration parameters (used for guestinfo)
-    # cfgparam: []
+    cfgparam:
+      - disk.enableUUID=TRUE
 
     # If you choose creation type clone a name of what you want to clone is required
-    # cloneFrom: ""
+    cloneFrom: /Datacenter/vm/rocky8-template
 
     # Contents of cloud-config yaml file to put into the ISO user-data; Format should be:
     # cloudConfig: |
@@ -85,16 +86,16 @@ nodepools:
     cpuCount: "0"
 
     # 'Creation type when creating a new virtual machine. Supported values: vm, template, library, legacy'
-    creationType: "template"
+    creationType: template
 
     # vSphere custom attribute, format key/value e.g. '200=mycustom value'
     # customAttribute: ["200=mycustom value"]
 
     # vSphere datacenter for virtual machine
-    datacenter: "Datacenter"
+    datacenter: /Datacenter
 
     # vSphere datastore for virtual machine
-    datastore: "Profile_004_NFS_DS"
+    datastore: /Datacenter/datastore/Profile_004_NFS_DS
 
     # vSphere datastore cluster for virtual machine
     # datastoreCluster: ""
@@ -103,19 +104,21 @@ nodepools:
     diskSize: "0"
 
     # vSphere folder for the docker VM. This folder must already exist in the datacenter
-    folder: "/Datacenter/vm/Rancher-Deployment"
+    folder: /Datacenter/vm/Rancher-Deployment
 
     # vSphere compute resource where the docker VM will be instantiated. This can be omitted if using a cluster with DRS
     # hostsystem: ""
 
     # vSphere size of memory for docker VM (in MB)
-    # memorySize: "2048"
+    memorySize: "0"
 
     # vSphere network where the virtual machine will be attached
-    # network: ""
+    network:
+      - /Datacenter/network/VL-115
+      - /Datacenter/network/VL-899
 
     # vSphere resource pool for docker VM
-    # pool: ""
+    pool: /Datacenter/host/Test-Cluster/Resources/Rancher-Deployment
 
     # If using a non-B2D image you can specify the ssh port
     sshPort: "22"
@@ -127,16 +130,20 @@ nodepools:
     # tag: ["urn:xxx"]
 
     # 'vSphere vApp IP allocation policy. Supported values are: dhcp, fixed, transient and fixedAllocated'
-    # vappIpallocationpolicy: ""
+    vappIpallocationpolicy: fixedAllocated
 
     # 'vSphere vApp IP protocol for this deployment. Supported values are: IPv4 and IPv6'
-    # vappIpprotocol: ""
+    vappIpprotocol: IPv4
 
     # vSphere vApp properties
-    # vappProperty: []
+    vappProperty:
+      - guestinfo.interface.0.ip.0.address=ip:VL-115
+      - guestinfo.interface.0.route.0.gateway=${gateway:VL-115}
+      - guestinfo.dns.servers=${dns:VL-115}
+      - guestinfo.interface.1.ip.0.address=ip:VL-899
 
     # 'vSphere OVF environment transports to use for properties. Supported values are: iso and com.vmware.guestInfo'
-    # vappTransport: ""
+    vappTransport: com.vmware.guestInfo
 
     # vSphere IP/hostname for vCenter
     # vcenter: ""
