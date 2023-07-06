@@ -1,7 +1,0 @@
-annotations:
-  catalog.cattle.io/namespace: fleet-default
-  catalog.cattle.io/type: cluster-template
-apiVersion: v1
-description: RKE2 Cluster template for DO
-name: rancher-vs-cluster-template2
-version: 0.1.1
