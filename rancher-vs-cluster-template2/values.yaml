@@ -10,6 +10,12 @@ nodepools:
   controlplane: true
   worker: true
 
+  # specify node labels
+  labels: null
+
+  # specify node taints
+  taints: []
+
   # specify nodepool size
   quantity: 1
 
