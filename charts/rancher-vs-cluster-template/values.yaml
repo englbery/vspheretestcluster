@@ -2,8 +2,8 @@ cloudprovider: vsphere
 
 cloudCredentialSecretName: "DemoLabRan"
 
-cluster:
-  name: vs-cluster
+#cluster:
+#  name: vs-cluster
 
 nodepools:
 - etcd: true
@@ -174,13 +174,13 @@ nodepools:
   # vSphere Port for vCenter
   vcenterPort: 443
 
-kubernetesVersion: "1.24.14+rke2r1"
+# kubernetesVersion: "1.24.14+rke2r1"
 
 # general RKE options
-rke:
+# rke:
   # enable local auth endpoint
-  localClusterAuthEndpoint:
-    enabled: false
+  # localClusterAuthEndpoint:
+  #   enabled: false
   # specify fqdn of local access endpoint
   # fqdn: foo.bar.example
   # specify cacert of local access endpoint
@@ -192,8 +192,8 @@ rke:
 #   roleTemplateName: "cluster-member"
 
 # enable monitoring
-monitoring:
-  enabled: false
+# monitoring:
+  # enabled: false
   # specify which version to install, can be semver range. If version is empty or is semver range, it will pick up the latest version.
   # version: ""
   # specify cutsom values set
