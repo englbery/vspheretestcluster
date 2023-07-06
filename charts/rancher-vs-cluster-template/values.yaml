@@ -78,39 +78,30 @@ nodepools:
         - path: /root/configure-networking.sh
           content: |
             #!/bin/bash
-
             SnIf1=24
             SnIf2=24
             uuidens192=$(nmcli connection show|grep "ens33"|awk '{print $(NF-2)}')
             uuidens224=$(nmcli connection show|grep "ens34"|awk '{print $(NF-2)}')
-
             vmtoolsd --cmd 'info-get guestinfo.ovfEnv' > /tmp/ovfenv
-
             # Interface 1
             IPAddressIf1=$(sed -n 's/.*Property oe:key="guestinfo.interface.0.ip.0.address" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
             GatewayIf1=$(sed -n 's/.*Property oe:key="guestinfo.interface.0.route.0.gateway" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
             DNS=$(sed -n 's/.*Property oe:key="guestinfo.dns.servers" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
-
             sudo nmcli connection modify ${uuidens192} ipv4.address ${IPAddressIf1}/${SnIf1}
             sudo nmcli connection modify ${uuidens192} ipv4.gateway ${GatewayIf1}
             sudo nmcli connection modify ${uuidens192} ipv4.dns "${DNS}"
             sudo nmcli connection modify ${uuidens192} ipv4.method manual
             sudo nmcli connection modify ${uuidens192} ipv6.method "disabled"
             sudo nmcli connection up ${uuidens192}
-
             # Interface 2
             IPAddressIf2=$(sed -n 's/.*Property oe:key="guestinfo.interface.1.ip.0.address" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
-
             sudo nmcli connection modify ${uuidens224} ipv4.address ${IPAddressIf2}/${SnIf2}
             sudo nmcli connection modify ${uuidens224} ipv4.method manual
             sudo nmcli connection modify ${uuidens224} ipv6.method "disabled"
             sudo nmcli connection up ${uuidens224}
-
             sudo systemctl restart NetworkManager
-
             # Hostname
             sudo hostnamectl set-hostname VALE-NO-${IPAddressIf1##*.}
-
       runcmd:
         - bash /root/configure-networking.sh
 
@@ -189,7 +180,6 @@ nodepools:
     # vSphere Port for vCenter
     vcenterPort: 443
 
-###########################
 kubernetesVersion: "1.24.14+rke2r1"
 
 # general RKE options
