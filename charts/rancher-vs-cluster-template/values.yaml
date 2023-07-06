@@ -72,84 +72,122 @@ nodepools:
     cloneFrom: /Datacenter/vm/rocky8-template
 
     # Contents of cloud-config yaml file to put into the ISO user-data; Format should be:
-    # cloudConfig: |
-    #   #cloud-config
-    #   <custom cloud-config>
+    cloudConfig: |
+      #cloud-config
+      write_files:
+        - path: /root/configure-networking.sh
+          content: |
+            #!/bin/bash
 
-    # vSphere cloud-init filepath or url to add to guestinfo, filepath will be read and base64 encoded before adding
-    # cloudinit: ""
+            SnIf1=24
+            SnIf2=24
+            uuidens192=$(nmcli connection show|grep "ens33"|awk '{print $(NF-2)}')
+            uuidens224=$(nmcli connection show|grep "ens34"|awk '{print $(NF-2)}')
 
-    # If you choose to clone from a content library template specify the name of the library
-    # contentLibrary: ""
+            vmtoolsd --cmd 'info-get guestinfo.ovfEnv' > /tmp/ovfenv
 
-    # vSphere CPU number for docker VM
-    cpuCount: "0"
+            # Interface 1
+            IPAddressIf1=$(sed -n 's/.*Property oe:key="guestinfo.interface.0.ip.0.address" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
+            GatewayIf1=$(sed -n 's/.*Property oe:key="guestinfo.interface.0.route.0.gateway" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
+            DNS=$(sed -n 's/.*Property oe:key="guestinfo.dns.servers" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
 
-    # 'Creation type when creating a new virtual machine. Supported values: vm, template, library, legacy'
-    creationType: template
+            sudo nmcli connection modify ${uuidens192} ipv4.address ${IPAddressIf1}/${SnIf1}
+            sudo nmcli connection modify ${uuidens192} ipv4.gateway ${GatewayIf1}
+            sudo nmcli connection modify ${uuidens192} ipv4.dns "${DNS}"
+            sudo nmcli connection modify ${uuidens192} ipv4.method manual
+            sudo nmcli connection modify ${uuidens192} ipv6.method "disabled"
+            sudo nmcli connection up ${uuidens192}
 
-    # vSphere custom attribute, format key/value e.g. '200=mycustom value'
-    # customAttribute: ["200=mycustom value"]
+            # Interface 2
+            IPAddressIf2=$(sed -n 's/.*Property oe:key="guestinfo.interface.1.ip.0.address" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
 
-    # vSphere datacenter for virtual machine
-    datacenter: /Datacenter
+            sudo nmcli connection modify ${uuidens224} ipv4.address ${IPAddressIf2}/${SnIf2}
+            sudo nmcli connection modify ${uuidens224} ipv4.method manual
+            sudo nmcli connection modify ${uuidens224} ipv6.method "disabled"
+            sudo nmcli connection up ${uuidens224}
 
-    # vSphere datastore for virtual machine
-    datastore: /Datacenter/datastore/Profile_004_NFS_DS
+            sudo systemctl restart NetworkManager
 
-    # vSphere datastore cluster for virtual machine
-    # datastoreCluster: ""
+            # Hostname
+            sudo hostnamectl set-hostname VALE-NO-${IPAddressIf1##*.}
 
-    # vSphere size of disk for docker VM (in MB)
-    diskSize: "0"
+      runcmd:
+        - bash /root/configure-networking.sh
 
-    # vSphere folder for the docker VM. This folder must already exist in the datacenter
-    folder: /Datacenter/vm/Rancher-Deployment
+        # vSphere cloud-init filepath or url to add to guestinfo, filepath will be read and base64 encoded before adding
+        # cloudinit: ""
 
-    # vSphere compute resource where the docker VM will be instantiated. This can be omitted if using a cluster with DRS
-    # hostsystem: ""
+        # If you choose to clone from a content library template specify the name of the library
+        # contentLibrary: ""
 
-    # vSphere size of memory for docker VM (in MB)
-    memorySize: "0"
+        # vSphere CPU number for docker VM
+        cpuCount: "0"
 
-    # vSphere network where the virtual machine will be attached
-    network:
-      - /Datacenter/network/VL-115
-      - /Datacenter/network/VL-899
+        # 'Creation type when creating a new virtual machine. Supported values: vm, template, library, legacy'
+        creationType: template
 
-    # vSphere resource pool for docker VM
-    pool: /Datacenter/host/Test-Cluster/Resources/Rancher-Deployment
+        # vSphere custom attribute, format key/value e.g. '200=mycustom value'
+        # customAttribute: ["200=mycustom value"]
 
-    # If using a non-B2D image you can specify the ssh port
-    sshPort: "22"
+        # vSphere datacenter for virtual machine
+        datacenter: /Datacenter
 
-    # If using a non-B2D image the uploaded keys will need chown'ed, defaults to staff e.g. docker:staff
-    sshUserGroup: staff
+        # vSphere datastore for virtual machine
+        datastore: /Datacenter/datastore/Profile_004_NFS_DS
 
-    # vSphere tag id e.g. urn:xxx
-    # tag: ["urn:xxx"]
+        # vSphere datastore cluster for virtual machine
+        # datastoreCluster: ""
 
-    # 'vSphere vApp IP allocation policy. Supported values are: dhcp, fixed, transient and fixedAllocated'
-    vappIpallocationpolicy: fixedAllocated
+        # vSphere size of disk for docker VM (in MB)
+        diskSize: "0"
 
-    # 'vSphere vApp IP protocol for this deployment. Supported values are: IPv4 and IPv6'
-    vappIpprotocol: IPv4
+        # vSphere folder for the docker VM. This folder must already exist in the datacenter
+        folder: /Datacenter/vm/Rancher-Deployment
 
-    # vSphere vApp properties
-    vappProperty:
-      - guestinfo.interface.0.ip.0.address=ip:VL-115
-      - guestinfo.interface.0.route.0.gateway=${gateway:VL-115}
-      - guestinfo.dns.servers=${dns:VL-115}
-      - guestinfo.interface.1.ip.0.address=ip:VL-899
+        # vSphere compute resource where the docker VM will be instantiated. This can be omitted if using a cluster with DRS
+        # hostsystem: ""
 
-    # 'vSphere OVF environment transports to use for properties. Supported values are: iso and com.vmware.guestInfo'
-    vappTransport: com.vmware.guestInfo
+        # vSphere size of memory for docker VM (in MB)
+        memorySize: "0"
 
-    # vSphere IP/hostname for vCenter
-    # vcenter: ""
+        # vSphere network where the virtual machine will be attached
+        network:
+          - /Datacenter/network/VL-115
+          - /Datacenter/network/VL-899
 
-    # vSphere Port for vCenter
-    vcenterPort: 443
+        # vSphere resource pool for docker VM
+        pool: /Datacenter/host/Test-Cluster/Resources/Rancher-Deployment
+
+        # If using a non-B2D image you can specify the ssh port
+        sshPort: "22"
+
+        # If using a non-B2D image the uploaded keys will need chown'ed, defaults to staff e.g. docker:staff
+        sshUserGroup: staff
+
+        # vSphere tag id e.g. urn:xxx
+        # tag: ["urn:xxx"]
+
+        # 'vSphere vApp IP allocation policy. Supported values are: dhcp, fixed, transient and fixedAllocated'
+        vappIpallocationpolicy: fixedAllocated
+
+        # 'vSphere vApp IP protocol for this deployment. Supported values are: IPv4 and IPv6'
+        vappIpprotocol: IPv4
+
+        # vSphere vApp properties
+        vappProperty:
+          - guestinfo.interface.0.ip.0.address=ip:VL-115
+          - guestinfo.interface.0.route.0.gateway=${gateway:VL-115}
+          - guestinfo.dns.servers=${dns:VL-115}
+          - guestinfo.interface.1.ip.0.address=ip:VL-899
+
+        # 'vSphere OVF environment transports to use for properties. Supported values are: iso and com.vmware.guestInfo'
+        vappTransport: com.vmware.guestInfo
+
+        # vSphere IP/hostname for vCenter
+        # vcenter: ""
+
+        # vSphere Port for vCenter
+        vcenterPort: 443
 
 ###########################
 kubernetesVersion: "1.24.14+rke2r1"
