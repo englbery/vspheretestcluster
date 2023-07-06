@@ -11,10 +11,10 @@ nodepools:
   worker: true
 
   # specify node labels
-  labels: {}
+  labels: null
 
   # specify node taints
-  taints: {}
+  taints: []
 
   # specify nodepool size
   quantity: 1
