@@ -6,173 +6,179 @@ cluster:
   name: vs-cluster
 
 nodepools:
-  - etcd: true
-    controlplane: true
-    worker: true
+- etcd: true
+  controlplane: true
+  worker: true
 
-    # specify nodepool size
-    quantity: 1
+  # specify node labels
+  labels: {}
 
-    # Pause node pool
-    paused: false
+  # specify node taints
+  taints: {}
 
-    # specify displayName
-    # displayName: ""
+  # specify nodepool size
+  quantity: 1
 
-    # specify rolling update mechanism
-    # rollingUpdate:
-    #   The maximum number of machines that can be unavailable during the update.
-    #   Value can be an absolute number (ex: 5) or a percentage of desired
-    #   machines (ex: 10%).
-    #   Absolute number is calculated from percentage by rounding down.
-    #   This can not be 0 if MaxSurge is 0.
-    #   Defaults to 0.
-    #   Example: when this is set to 30%, the old MachineSet can be scaled
-    #   down to 70% of desired machines immediately when the rolling update
-    #   starts. Once new machines are ready, old MachineSet can be scaled
-    #   down further, followed by scaling up the new MachineSet, ensuring
-    #   that the total number of machines available at all times
-    #   during the update is at least 70% of desired machines.
-    #   maxUnavailable: "5"
-    #   The maximum number of machines that can be scheduled above the
-    #   desired number of machines.
-    #   Value can be an absolute number (ex: 5) or a percentage of
-    #   desired machines (ex: 10%).
-    #   This can not be 0 if MaxUnavailable is 0.
-    #   Absolute number is calculated from percentage by rounding up.
-    #   Defaults to 1.
-    #   Example: when this is set to 30%, the new MachineSet can be scaled
-    #   up immediately when the rolling update starts, such that the total
-    #   number of old and new machines do not exceed 130% of desired
-    #   machines. Once old machines have been killed, new MachineSet can
-    #   be scaled up further, ensuring that total number of machines running
-    #   at any time during the update is at most 130% of desired machines.
-    #   maxSurge: "1"
+  # Pause node pool
+  paused: false
 
-    # specify machineDeployment Labels
-    # machineDeploymentLabels: {}
+  # specify displayName
+  # displayName: ""
 
-    # specify machineDeployment annotations
-    # machineDeploymentAnnotations: {}
+  # specify rolling update mechanism
+  # rollingUpdate:
+  #   The maximum number of machines that can be unavailable during the update.
+  #   Value can be an absolute number (ex: 5) or a percentage of desired
+  #   machines (ex: 10%).
+  #   Absolute number is calculated from percentage by rounding down.
+  #   This can not be 0 if MaxSurge is 0.
+  #   Defaults to 0.
+  #   Example: when this is set to 30%, the old MachineSet can be scaled
+  #   down to 70% of desired machines immediately when the rolling update
+  #   starts. Once new machines are ready, old MachineSet can be scaled
+  #   down further, followed by scaling up the new MachineSet, ensuring
+  #   that the total number of machines available at all times
+  #   during the update is at least 70% of desired machines.
+  #   maxUnavailable: "5"
+  #   The maximum number of machines that can be scheduled above the
+  #   desired number of machines.
+  #   Value can be an absolute number (ex: 5) or a percentage of
+  #   desired machines (ex: 10%).
+  #   This can not be 0 if MaxUnavailable is 0.
+  #   Absolute number is calculated from percentage by rounding up.
+  #   Defaults to 1.
+  #   Example: when this is set to 30%, the new MachineSet can be scaled
+  #   up immediately when the rolling update starts, such that the total
+  #   number of old and new machines do not exceed 130% of desired
+  #   machines. Once old machines have been killed, new MachineSet can
+  #   be scaled up further, ensuring that total number of machines running
+  #   at any time during the update is at most 130% of desired machines.
+  #   maxSurge: "1"
 
-    # specify nodepool name
-    name: "vsphere-nodepool-1"
+  # specify machineDeployment Labels
+  # machineDeploymentLabels: {}
 
-    # vSphere vm configuration parameters (used for guestinfo)
-    cfgparam:
-      - disk.enableUUID=TRUE
+  # specify machineDeployment annotations
+  # machineDeploymentAnnotations: {}
 
-    # If you choose creation type clone a name of what you want to clone is required
-    cloneFrom: /Datacenter/vm/rocky8-template
+  # specify nodepool name
+  name: "vsphere-nodepool-1"
 
-    # Contents of cloud-config yaml file to put into the ISO user-data; Format should be:
-    cloudConfig: |
-      #cloud-config
-      write_files:
-        - path: /root/configure-networking.sh
-          content: |
-            #!/bin/bash
-            SnIf1=24
-            SnIf2=24
-            uuidens192=$(nmcli connection show|grep "ens33"|awk '{print $(NF-2)}')
-            uuidens224=$(nmcli connection show|grep "ens34"|awk '{print $(NF-2)}')
-            vmtoolsd --cmd 'info-get guestinfo.ovfEnv' > /tmp/ovfenv
-            # Interface 1
-            IPAddressIf1=$(sed -n 's/.*Property oe:key="guestinfo.interface.0.ip.0.address" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
-            GatewayIf1=$(sed -n 's/.*Property oe:key="guestinfo.interface.0.route.0.gateway" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
-            DNS=$(sed -n 's/.*Property oe:key="guestinfo.dns.servers" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
-            sudo nmcli connection modify ${uuidens192} ipv4.address ${IPAddressIf1}/${SnIf1}
-            sudo nmcli connection modify ${uuidens192} ipv4.gateway ${GatewayIf1}
-            sudo nmcli connection modify ${uuidens192} ipv4.dns "${DNS}"
-            sudo nmcli connection modify ${uuidens192} ipv4.method manual
-            sudo nmcli connection modify ${uuidens192} ipv6.method "disabled"
-            sudo nmcli connection up ${uuidens192}
-            # Interface 2
-            IPAddressIf2=$(sed -n 's/.*Property oe:key="guestinfo.interface.1.ip.0.address" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
-            sudo nmcli connection modify ${uuidens224} ipv4.address ${IPAddressIf2}/${SnIf2}
-            sudo nmcli connection modify ${uuidens224} ipv4.method manual
-            sudo nmcli connection modify ${uuidens224} ipv6.method "disabled"
-            sudo nmcli connection up ${uuidens224}
-            sudo systemctl restart NetworkManager
-            # Hostname
-            sudo hostnamectl set-hostname VALE-NO-${IPAddressIf1##*.}
-      runcmd:
-        - bash /root/configure-networking.sh
+  # vSphere vm configuration parameters (used for guestinfo)
+  cfgparam:
+    - disk.enableUUID=TRUE
 
-    # vSphere cloud-init filepath or url to add to guestinfo, filepath will be read and base64 encoded before adding
-    # cloudinit: ""
+  # If you choose creation type clone a name of what you want to clone is required
+  cloneFrom: /Datacenter/vm/rocky8-template
 
-    # If you choose to clone from a content library template specify the name of the library
-    # contentLibrary: ""
+  # Contents of cloud-config yaml file to put into the ISO user-data; Format should be:
+  cloudConfig: |
+    #cloud-config
+    write_files:
+      - path: /root/configure-networking.sh
+        content: |
+          #!/bin/bash
+          SnIf1=24
+          SnIf2=24
+          uuidens192=$(nmcli connection show|grep "ens33"|awk '{print $(NF-2)}')
+          uuidens224=$(nmcli connection show|grep "ens34"|awk '{print $(NF-2)}')
+          vmtoolsd --cmd 'info-get guestinfo.ovfEnv' > /tmp/ovfenv
+          # Interface 1
+          IPAddressIf1=$(sed -n 's/.*Property oe:key="guestinfo.interface.0.ip.0.address" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
+          GatewayIf1=$(sed -n 's/.*Property oe:key="guestinfo.interface.0.route.0.gateway" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
+          DNS=$(sed -n 's/.*Property oe:key="guestinfo.dns.servers" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
+          sudo nmcli connection modify ${uuidens192} ipv4.address ${IPAddressIf1}/${SnIf1}
+          sudo nmcli connection modify ${uuidens192} ipv4.gateway ${GatewayIf1}
+          sudo nmcli connection modify ${uuidens192} ipv4.dns "${DNS}"
+          sudo nmcli connection modify ${uuidens192} ipv4.method manual
+          sudo nmcli connection modify ${uuidens192} ipv6.method "disabled"
+          sudo nmcli connection up ${uuidens192}
+          # Interface 2
+          IPAddressIf2=$(sed -n 's/.*Property oe:key="guestinfo.interface.1.ip.0.address" oe:value="\([^"]*\).*/\1/p' /tmp/ovfenv)
+          sudo nmcli connection modify ${uuidens224} ipv4.address ${IPAddressIf2}/${SnIf2}
+          sudo nmcli connection modify ${uuidens224} ipv4.method manual
+          sudo nmcli connection modify ${uuidens224} ipv6.method "disabled"
+          sudo nmcli connection up ${uuidens224}
+          sudo systemctl restart NetworkManager
+          # Hostname
+          sudo hostnamectl set-hostname VALE-NO-${IPAddressIf1##*.}
+    runcmd:
+      - bash /root/configure-networking.sh
 
-    # vSphere CPU number for docker VM
-    cpuCount: "0"
+  # vSphere cloud-init filepath or url to add to guestinfo, filepath will be read and base64 encoded before adding
+  # cloudinit: ""
 
-    # 'Creation type when creating a new virtual machine. Supported values: vm, template, library, legacy'
-    creationType: template
+  # If you choose to clone from a content library template specify the name of the library
+  # contentLibrary: ""
 
-    # vSphere custom attribute, format key/value e.g. '200=mycustom value'
-    # customAttribute: ["200=mycustom value"]
+  # vSphere CPU number for docker VM
+  cpuCount: "0"
 
-    # vSphere datacenter for virtual machine
-    datacenter: /Datacenter
+  # 'Creation type when creating a new virtual machine. Supported values: vm, template, library, legacy'
+  creationType: template
 
-    # vSphere datastore for virtual machine
-    datastore: /Datacenter/datastore/Profile_004_NFS_DS
+  # vSphere custom attribute, format key/value e.g. '200=mycustom value'
+  # customAttribute: ["200=mycustom value"]
 
-    # vSphere datastore cluster for virtual machine
-    # datastoreCluster: ""
+  # vSphere datacenter for virtual machine
+  datacenter: /Datacenter
 
-    # vSphere size of disk for docker VM (in MB)
-    diskSize: "0"
+  # vSphere datastore for virtual machine
+  datastore: /Datacenter/datastore/Profile_004_NFS_DS
 
-    # vSphere folder for the docker VM. This folder must already exist in the datacenter
-    folder: /Datacenter/vm/Rancher-Deployment
+  # vSphere datastore cluster for virtual machine
+  # datastoreCluster: ""
 
-    # vSphere compute resource where the docker VM will be instantiated. This can be omitted if using a cluster with DRS
-    # hostsystem: ""
+  # vSphere size of disk for docker VM (in MB)
+  diskSize: "0"
 
-    # vSphere size of memory for docker VM (in MB)
-    memorySize: "0"
+  # vSphere folder for the docker VM. This folder must already exist in the datacenter
+  folder: /Datacenter/vm/Rancher-Deployment
 
-    # vSphere network where the virtual machine will be attached
-    network:
-      - /Datacenter/network/VL-115
-      - /Datacenter/network/VL-899
+  # vSphere compute resource where the docker VM will be instantiated. This can be omitted if using a cluster with DRS
+  # hostsystem: ""
 
-    # vSphere resource pool for docker VM
-    pool: /Datacenter/host/Test-Cluster/Resources/Rancher-Deployment
+  # vSphere size of memory for docker VM (in MB)
+  memorySize: "0"
 
-    # If using a non-B2D image you can specify the ssh port
-    sshPort: "22"
+  # vSphere network where the virtual machine will be attached
+  network:
+    - /Datacenter/network/VL-115
+    - /Datacenter/network/VL-899
 
-    # If using a non-B2D image the uploaded keys will need chown'ed, defaults to staff e.g. docker:staff
-    sshUserGroup: staff
+  # vSphere resource pool for docker VM
+  pool: /Datacenter/host/Test-Cluster/Resources/Rancher-Deployment
 
-    # vSphere tag id e.g. urn:xxx
-    # tag: ["urn:xxx"]
+  # If using a non-B2D image you can specify the ssh port
+  sshPort: "22"
 
-    # 'vSphere vApp IP allocation policy. Supported values are: dhcp, fixed, transient and fixedAllocated'
-    vappIpallocationpolicy: fixedAllocated
+  # If using a non-B2D image the uploaded keys will need chown'ed, defaults to staff e.g. docker:staff
+  sshUserGroup: staff
 
-    # 'vSphere vApp IP protocol for this deployment. Supported values are: IPv4 and IPv6'
-    vappIpprotocol: IPv4
+  # vSphere tag id e.g. urn:xxx
+  # tag: ["urn:xxx"]
 
-    # vSphere vApp properties
-    vappProperty:
-      - guestinfo.interface.0.ip.0.address=ip:VL-115
-      - guestinfo.interface.0.route.0.gateway=${gateway:VL-115}
-      - guestinfo.dns.servers=${dns:VL-115}
-      - guestinfo.interface.1.ip.0.address=ip:VL-899
+  # 'vSphere vApp IP allocation policy. Supported values are: dhcp, fixed, transient and fixedAllocated'
+  vappIpallocationpolicy: fixedAllocated
 
-    # 'vSphere OVF environment transports to use for properties. Supported values are: iso and com.vmware.guestInfo'
-    vappTransport: com.vmware.guestInfo
+  # 'vSphere vApp IP protocol for this deployment. Supported values are: IPv4 and IPv6'
+  vappIpprotocol: IPv4
 
-    # vSphere IP/hostname for vCenter
-    # vcenter: ""
+  # vSphere vApp properties
+  vappProperty:
+    - guestinfo.interface.0.ip.0.address=ip:VL-115
+    - guestinfo.interface.0.route.0.gateway=${gateway:VL-115}
+    - guestinfo.dns.servers=${dns:VL-115}
+    - guestinfo.interface.1.ip.0.address=ip:VL-899
 
-    # vSphere Port for vCenter
-    vcenterPort: 443
+  # 'vSphere OVF environment transports to use for properties. Supported values are: iso and com.vmware.guestInfo'
+  vappTransport: com.vmware.guestInfo
+
+  # vSphere IP/hostname for vCenter
+  # vcenter: ""
+
+  # vSphere Port for vCenter
+  vcenterPort: 443
 
 kubernetesVersion: "1.24.14+rke2r1"
 
